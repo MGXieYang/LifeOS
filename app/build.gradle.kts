@@ -11,8 +11,8 @@ android {
         applicationId = "com.lifeos"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.0.3"
+        versionCode = 4
+        versionName = "0.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -21,6 +21,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    sourceSets["androidTest"].assets.srcDir("$projectDir/schemas")
 }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 dependencies {
@@ -41,5 +42,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20250107")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.room:room-testing:2.7.1")
 }
-

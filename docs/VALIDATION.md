@@ -1,23 +1,32 @@
-# 验证记录
+# LifeOS V3.0 验证记录
 
-日期：2026-09-07。V2 最近一次完整构建：`:domain:test`、`:app:testDebugUnitTest`、`:app:assembleDebug`、`:app:lintDebug` 全部成功。领域测试现为 20 项，新增午休关闭、天平 TCO/使用成本/超大金额、自由时间归零、人生节点、年度缺失日历和决策复盘状态覆盖。
+日期：2026-09-08。
 
-## 已完成
+## 规定任务
 
-- `:domain:test`：20 项测试通过，0 失败。
-- `:app:testDebugUnitTest`：8 项测试通过，0 失败。
-- 真实年度日历测试覆盖 2025/2026 官方补班与假期、两年全部 24 个月月末工资结清；联网 2026 年数据与内置数据逐日对比 365 天一致。
-- 工资验收示例、午休/上下班边界、非工作日、改薪、四个工作时间点自定义、时区重算、月末/闰年/跨年发薪、0 元与超大心愿、三类退休及政策边界均有单测。自定义时间测试覆盖 08:00 上班、11:45 午休开始、13:15 午休结束、17:30 下班，并验证午休期间收入暂停。
-- 日历响应测试覆盖年份不符、来源缺失/非政府域名、空数据、日期重复和前一年 12 月覆盖。
-- Android 主代码、Room KSP 和数据库 schema 已生成；Debug APK 已成功编译。
-- APK 按 V2 需求基线打包成功，包名 `com.lifeos`，versionCode `3`，versionName `0.0.3`，minSdk 26，targetSdk 35。
-- 最终交付 `deliverables/LifeOS-0.0.3-debug.apk`，SHA-256：`D024390C477E96326D11EBD012C1180141798BEB3CD74594F8D5626F293B849D`；APK Signature Scheme v2 校验通过，签名者 1 个。
-- Gradle Wrapper 8.13 已生成；本工作区通过 `scripts/build-local.ps1` 可复现构建。
+- `:domain:test`：成功。2 个测试套件、22 项测试、0 失败、0 错误。
+- `:app:testDebugUnitTest`：成功。1 个测试套件、3 项测试、0 失败、0 错误。
+- `:app:assembleDebug`：成功。
+- `:app:lintDebug`：成功，0 错误、4 个警告。警告为 compile/target SDK 35 和两个固定依赖存在更新版本，不影响本次构建。
 
-## 限制与后续
+最终四项任务已在同一次 Gradle 调用中复跑并显示 `BUILD SUCCESSFUL`。构建使用项目私有 Microsoft OpenJDK 17.0.20.1、Android Platform 35 和 Build Tools 35.0.0。
 
-- 尚无可用真机/模拟器运行验收，未验证实际页面排版、设备旋转、杀进程恢复、系统改时/时区、Room/DataStore 跨进程持久化及真实设备网络失败交互。
-- `:app:lintDebug`：0 错误、14 个警告。警告均为可用新版 SDK/依赖提示；当前使用已编译验证的固定版本，上架前需复核目标 SDK 要求。
-- 最终资源和隐私配置已重新打包，构建成功。Android 12 及以上明确禁止应用数据参与云备份和设备迁移。
-- `req/需求文档V2.0.docx` 已同步运行时联网日历边界、默认工时及 App 标识；正文原 1051 段保持，新增 4 段标识附录，共 1055 段。默认 09:30—19:00、12:30—14:00 午休、有效 8 小时。
-- 当前环境没有 bundled LibreOffice，DOCX 渲染命令因缺少 soffice 失败；文档分页视觉检查未完成。未重排未涉及需求的内容。
+## 覆盖
+
+保留测试继续覆盖默认 09:30—19:00、8 小时有效工时、上班前/工作/午休/下班/休息日、无午休、自定义四时间点、今日/全月收入、月末精确结清、发薪日、系统 Clock/时区、普通工作日/周末/法定假期/周末补班、三类渐进式退休政策边界。
+
+V3 新增测试覆盖金额 0/8999/超大值、工作小时/工作日/月薪比例、五级 PurchaseWeightPolicy、每天/每周/每月 UsageValue、不同周期与非法输入、年度余额、当前年龄、人生节点、自然周末、90/180/365 算法基础、显式法定假日、调休周末、完整可休周末和缺失年份估算。
+
+Room 1→2 instrumentation migration test 源码已通过 `:app:compileDebugAndroidTestKotlin` 编译；测试会插入 V1 天平/节点/Decision 数据，验证天平和节点保留、Decision 表删除。当前没有连接设备或模拟器，因此没有把该 instrumentation test 记录为已运行。
+
+## 产物
+
+`deliverables/LifeOS-0.0.4-debug.apk`，包名 `com.lifeos`，versionCode 4，versionName 0.0.4，应用名 LifeOS。
+
+SHA-256：`3F6F0398C47967B7D86CBD4B1ACD2ED9F2DBD0721D58BBD2FA506A5C9B769F5E`。
+
+APK Signature Scheme v2 验证通过，签名者 1 个。最终 APK 不包含 INTERNET 权限；仅存在 Android 构建工具自动生成的应用内动态接收器权限。
+
+## 未完成的设备验证
+
+当前没有真机或模拟器，尚未实际检查小屏、大字体、输入法、深色模式、动画关闭、锁屏/杀进程恢复和真实 V2 数据库升级。V3.0 DOCX 的只读渲染因工作区依赖中没有 bundled LibreOffice 而失败；已通过 python-docx 完整提取正文与结构进行需求审计，没有修改原 DOCX。

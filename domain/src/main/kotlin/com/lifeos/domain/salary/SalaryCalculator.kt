@@ -53,7 +53,7 @@ class SalaryCalculator(private val calendar: WorkCalendar) {
         val countdownTarget = when (state) {
             WorkState.BEFORE_WORK -> s.workStart
             WorkState.LUNCH_BREAK -> s.lunchEnd
-            WorkState.WORKING, WorkState.WORKING_MORNING, WorkState.WORKING_AFTERNOON -> s.workEnd
+            WorkState.WORKING -> s.workEnd
             else -> time
         }
         return SalaryResult(now, state, days.size, previous + if (workday && worked == daily) 1 else 0,

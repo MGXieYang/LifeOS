@@ -19,7 +19,9 @@ class WorkCalendar(years: List<CalendarYear>) {
     val coveredYears get() = entries.keys.sorted()
     fun hasYear(year: Int) = year in entries
     fun metadata(year: Int): CalendarYear? = entries[year]
-    fun isWorkday(date: LocalDate): Boolean = when (entries[date.year]?.days?.get(date)) {
+    fun explicitType(date: LocalDate): WorkDayType? = entries[date.year]?.days?.get(date)
+    fun isExplicitHoliday(date: LocalDate): Boolean = explicitType(date) == WorkDayType.HOLIDAY
+    fun isWorkday(date: LocalDate): Boolean = when (explicitType(date)) {
         WorkDayType.WORKDAY -> true
         WorkDayType.HOLIDAY -> false
         null -> date.dayOfWeek != DayOfWeek.SATURDAY && date.dayOfWeek != DayOfWeek.SUNDAY

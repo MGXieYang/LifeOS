@@ -3,6 +3,7 @@ package com.lifeos.domain.retirement
 import com.lifeos.domain.RetirementType
 import com.lifeos.domain.calendar.WorkCalendar
 import java.time.LocalDate
+import java.time.Clock
 import java.time.Period
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
@@ -11,6 +12,9 @@ data class RetirementPolicy(val version: String = "CN-2025.1", val effectiveDate
 data class RetirementResult(val date: LocalDate, val remaining: Period, val estimatedWorkdays: Long,
     val delayMonths: Long, val reached: Boolean, val policyVersion: String)
 class RetirementCalculator(private val calendar: WorkCalendar, private val policy: RetirementPolicy = RetirementPolicy()) {
+    fun calculate(birth: LocalDate, type: RetirementType, clock: Clock): RetirementResult =
+        calculate(birth, type, LocalDate.now(clock))
+
     fun calculate(birth: LocalDate, type: RetirementType, today: LocalDate): RetirementResult {
         require(birth <= today) { "出生日期不能晚于今天" }
         val baseAge = when (type) { RetirementType.MALE -> 60; RetirementType.FEMALE_55 -> 55; RetirementType.FEMALE_50 -> 50 }

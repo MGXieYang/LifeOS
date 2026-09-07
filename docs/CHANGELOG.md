@@ -1,4 +1,34 @@
 # 变更记录
+## 2026-09-07 · V3.0 Phase 0
+- 将 `docs/PRODUCT.md` 切换为唯一有效产品事实源，历史 PRD 不再参与当前实现判断。
+- 完成代码、Domain、UI、Room、DataStore 和测试的 KEEP / REFACTOR / DELETE / NEW Gap Analysis。
+- 确定 Room 1→2 保留式迁移、DataStore 旧字段迁移和 Phase 1→5 文件计划。
+- 按产品方即时修订将默认下班时间确认为 19:00、默认有效工时确认为 8 小时；V3.0 DOCX 中 19:30/8.5 小时不作为实现依据。
+
+## 2026-09-07 · V3.0 Phase 1
+- 品牌统一为 LifeOS；新增三步 Onboarding，默认 09:30—19:00、午休 12:30—14:00、发薪日 7 号。
+- 底部导航改为当下、天平、时间、设置；首页重建为今日牛马 Hero、本月已赚、距离发薪。
+- 设置重构为工作、个人、显示、数据、日历、关于，新增轻松/简洁模式与系统/浅色/深色主题。
+- 删除 Decision、FreeTime、旧页面、旧备份和联网日历入口；移除 INTERNET 权限。
+- 加入 DataStore V3 字段迁移和 Room 1→2 保留式迁移。
+
+## 2026-09-07 · V3.0 Phase 2
+- 新增 PurchaseWeightPolicy 五级压力策略，保留 BigDecimal 金额到工作代价的正确换算。
+- 重建天平页面：金额、可选名称、价格 Slider、动态横梁/砝码、工作小时、工作日、月薪比例与非购买建议结论。
+
+## 2026-09-07 · V3.0 Phase 3
+- 新增 UsageValueCalculator，支持每天/每周/每月频率、预计使用次数、单次/每天/每月成本。
+- 天平加入默认关闭的长期价值输入和用户主动保存的精简历史。
+
+## 2026-09-07 · V3.0 Phase 4
+- 时间页加入年度进度环、年度法定假日余额、人生时间轴、当前年龄、自定义节点详情和退休卡。
+- LifeTimeCalculator 增加 Clock 入口、当前年龄和完整自然周末计算。
+
+## 2026-09-07 · V3.0 Phase 5
+- 新增 FutureTimeBudgetCalculator 和 90/180/365 天切换，计算工作日、非工作日、显式法定假日和完整可休周末。
+- ViewModel 按系统日期缓存年度、退休和未来预算，避免 250ms 刷新重复扫描长日期窗口。
+- 验证通过：Domain 22 项、App 3 项单测，Debug APK、Lint（0 错误/4 警告）和 APK v2 签名。
+
 ## 2026-09-07
 ### Added
 - Phase 1：原生 Android / 纯 Kotlin domain 脚手架、2025/2026 日历、工资与工时算法、确定性单测。

@@ -4,21 +4,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.lifeos.domain.money
+import com.lifeos.domain.ThemeMode
 import com.lifeos.domain.salary.WorkState
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 val Forest = Color(0xFF183C32)
 val Lime = Color(0xFFCEF58A)
-@Composable fun LifeOsTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme=lightColorScheme(primary=Forest,onPrimary=Color.White,
+@Composable fun LifeOsTheme(themeMode: ThemeMode = ThemeMode.SYSTEM, content: @Composable () -> Unit) {
+    val dark = when(themeMode) { ThemeMode.SYSTEM -> isSystemInDarkTheme(); ThemeMode.LIGHT -> false; ThemeMode.DARK -> true }
+    val colors = if(dark) darkColorScheme(primary=Lime,onPrimary=Forest,primaryContainer=Forest,onPrimaryContainer=Lime,
+        background=Color(0xFF111815),surface=Color(0xFF1B2420),onSurface=Color(0xFFE4ECE7),secondary=Color(0xFFB9C9B5)) else
+        lightColorScheme(primary=Forest,onPrimary=Color.White,
         primaryContainer=Lime,onPrimaryContainer=Forest,background=Color(0xFFF5F6F2),
-        surface=Color(0xFFFFFFFF),onSurface=Color(0xFF202B25),secondary=Color(0xFF64755D)),content=content)
+        surface=Color(0xFFFFFFFF),onSurface=Color(0xFF202B25),secondary=Color(0xFF64755D))
+    MaterialTheme(colorScheme=colors,content=content)
 }
 @Composable fun Panel(modifier: Modifier = Modifier, green: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     Card(modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),
@@ -47,23 +53,16 @@ fun timer(seconds: Long): String {
 object MotivationTextProvider {
     fun title(state: WorkState) = when(state) {
         WorkState.BEFORE_WORK -> "😴 牛马尚未上线"
-        WorkState.WORKING, WorkState.WORKING_MORNING -> "🐂 牛马驱动器运行中"
+        WorkState.WORKING -> "🐂 牛马驱动器运行中"
         WorkState.LUNCH_BREAK -> "🍚 正在补充牛马燃料"
-        WorkState.WORKING_AFTERNOON -> "🐂 下午场已启动"
         WorkState.AFTER_WORK -> "🏃 下班，任务完成！"
         WorkState.HOLIDAY -> "🎉 今日拒绝出售人生"
     }
     fun message(state: WorkState, progress: Double) = when(state) {
         WorkState.BEFORE_WORK -> "珍惜现在，这是今天最后的自由时光。"
-        WorkState.WORKING, WorkState.WORKING_MORNING, WorkState.WORKING_AFTERNOON -> if(progress > .8) "胜利在望，再坚持一下就能撤离工位。" else "至少这一秒，是有工资的。"
+        WorkState.WORKING -> if(progress > .8) "胜利在望，再坚持一下就能撤离工位。" else "至少这一秒，是有工资的。"
         WorkState.LUNCH_BREAK -> "放心吃，这段时间老板买不到。"
         WorkState.AFTER_WORK -> "今天的牛马任务已完成，请立即撤离工位。"
         WorkState.HOLIDAY -> "好好休息，资本家今天买不到你。"
-    }
-    fun wish(days: BigDecimal) = when {
-        days < BigDecimal.ONE -> "这个可以冲，老板请的。"
-        days < BigDecimal("5") -> "几天班换一个快乐，你自己看着办。"
-        days < BigDecimal("23") -> "喜欢就买之前，先让老板付一阵工资。"
-        else -> "这个愿望建议先别让老板知道。"
     }
 }

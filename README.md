@@ -1,53 +1,27 @@
-# Life OS
+# LifeOS
 
-App 当前版本为 `0.0.3`，需求基线是 `req/需求文档V2.0.docx`，V1 需求仅用于历史追溯。Life OS 用“当下、天平、时间、决策”回答现在、消耗、人生余额和选择复盘四类问题。
+LifeOS 0.0.4 是一个 Local First / Offline First Android 应用，让工作的回报看得见、消费的重量感受得到、时间的流逝变得具体。`docs/PRODUCT.md` 是当前唯一有效产品事实源。
 
-原生 Android 应用，最低 Android 8.0（API 26）。
+## 当前功能
 
-## V2 已实现
+- 当下：实时今日收入、有效工作时长、下班/午休倒计时、本月已赚、发薪倒计时。
+- 天平：金额的工作小时、工作日、月薪比例、压力等级、长期使用成本和可选历史。
+- 时间：年度进度、人生时间轴、自定义节点、渐进式退休、90/180/365 天未来预算。
+- 设置：工作、个人、显示、主题和本地数据说明。
 
-- 当下：工作状态、实时收入、年收入视角、年度时间余额和置顶关注。
-- 天平：价格折算工作小时/日/月、生命成本等级、TCO 与使用成本领域模型，考虑/购入/放弃、单项置顶。
-- 时间：年龄/日期节点、退休节点、年度工作日/非工作日余额、自由时间模型。
-- 决策：信心步长 5%、决策状态、复盘日与复盘统计。
-- 设置：工作、生活、显示、数据、关于；JSON 本地备份导入导出。
-- V1 心愿在首次运行 V2 时迁移到天平；原 V1 数据库保留作为迁移源。
+Decision 与 FreeTime 已从 V3 代码、导航和持久化模型删除。核心计算完全离线；系统时钟是当前时刻唯一事实来源。
 
-- 首次引导、设置：税后月薪；可分别自定义上班、午休开始、午休结束、下班时间；自定义每月 1～31 号发薪日；可选出生日期及三类退休人员类别。
-- 首页：基于系统时间的秒级收入、六种工作状态、午休暂停、今日/月度进度、下班/发薪/退休倒计时。
-- 心愿：本机增删改、实现与取消实现、排序、按当前月薪折算小时/工作日/工作月。
-- 统计：月度工作量、时间单价、自定义工作分钟换算。
-- 日历：内置 2025/2026 法定假期与调休，可在设置中按需联网更新当年/下一年；失败保留缓存，缺失年份显式提示估算。
+## 技术栈
 
-工资、出生日期、心愿不上传。无登录、无自建后端、无后台计时服务。联网权限仅用于获取公开日历；网络数据来自 holiday-cn 开源项目，不是官方 API。
+Kotlin、Compose Material 3、Navigation、ViewModel、Flow、Room、DataStore；`:domain` 为纯 JVM 模块。
 
 ## 构建
 
-安装 JDK 17、Android SDK Platform 35 与 Build Tools 35.0.0。Android Studio 打开本目录即可同步。
-
-设置 JAVA_HOME、ANDROID_HOME，或在未提交的 local.properties 中写入 sdk.dir，然后：
+安装 JDK 17、Android SDK Platform 35 与 Build Tools 35.0.0，设置 JAVA_HOME 和 ANDROID_HOME 后运行：
 
 ```powershell
 .\gradlew.bat :domain:test :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
 ```
 
-macOS/Linux 使用 `./gradlew`（首次可执行 `chmod +x gradlew`）。
+项目私有工具可放在未提交的 `.tools/jdk`、`.tools/android-sdk`、`.tools/gradle-home`，并通过 `scripts/build-local.ps1` 运行同一组任务。
 
-APK 输出：`app/build/outputs/apk/debug/app-debug.apk`。联网用于更新公开日期、法定节假日和调休；内置日历与缓存保证离线可用，缺失年份按普通工作周估算并提示。
-
-当前工作区已在 `.tools` 准备 JDK/Gradle/SDK；可运行 `scripts/build-local.ps1` 使用本地工具构建，无需全局安装。
-
-## 目录
-
-- `domain/`：独立 Kotlin/JVM 工资、工时、日历、退休、心愿计算及单测。
-- `app/`：Compose UI、ViewModel、Navigation、DataStore、Room、Assets 和日历网络缓存。
-- `docs/`：产品、架构、规则、数据模型、日历/退休政策、验证和待办。
-- `req/` 中的 PRD 已覆盖用户修订：允许日历联网；发薪日及上下班、午休时间支持自定义。
-
-## 业务与验收说明
-
-默认 09:30—19:00，12:30—14:00 午休，每天有效 8 小时；以当月真实法定工作日均摊税后月薪。
-月中修改设置立即重算全月，无历史考勤或收入记录。发薪当天显示“今天发工资”，到账情况由雇主决定。
-退休政策结果精确到月，日级倒计时按生日估算；未来工作日始终标注预计。
-
-详见 `docs/DOMAIN_RULES.md`、`docs/CALENDAR.md`、`docs/RETIREMENT.md`。

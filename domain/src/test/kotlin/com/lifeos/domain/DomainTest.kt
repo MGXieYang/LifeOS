@@ -2,7 +2,6 @@ package com.lifeos.domain
 
 import com.lifeos.domain.calendar.*
 import com.lifeos.domain.salary.*
-import com.lifeos.domain.wish.*
 import com.lifeos.domain.retirement.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -22,12 +21,12 @@ class DomainTest {
     @Test fun acceptanceExamplesAndStateBoundaries() {
         val cases = listOf(
             Triple("09:29:59", "0.00", WorkState.BEFORE_WORK),
-            Triple("09:30:00", "0.00", WorkState.WORKING_MORNING),
-            Triple("10:30:00", "56.82", WorkState.WORKING_MORNING),
+            Triple("09:30:00", "0.00", WorkState.WORKING),
+            Triple("10:30:00", "56.82", WorkState.WORKING),
             Triple("12:30:00", "170.45", WorkState.LUNCH_BREAK),
             Triple("13:30:00", "170.45", WorkState.LUNCH_BREAK),
-            Triple("14:00:00", "170.45", WorkState.WORKING_AFTERNOON),
-            Triple("15:00:00", "227.27", WorkState.WORKING_AFTERNOON),
+            Triple("14:00:00", "170.45", WorkState.WORKING),
+            Triple("15:00:00", "227.27", WorkState.WORKING),
             Triple("19:00:00", "454.55", WorkState.AFTER_WORK),
             Triple("23:59:59", "454.55", WorkState.AFTER_WORK))
         cases.forEach { (time, amount, state) ->
@@ -104,16 +103,8 @@ class DomainTest {
         assertEquals(28800L, beforeLunch.dailyWorkSeconds)
         assertEquals(WorkState.LUNCH_BREAK, duringLunch.state)
         assertEquals(beforeLunch.todayWorkedSeconds, duringLunch.todayWorkedSeconds)
-        assertEquals(WorkState.WORKING_AFTERNOON, afterLunch.state)
+        assertEquals(WorkState.WORKING, afterLunch.state)
         assertEquals(beforeLunch.todayWorkedSeconds + 3600, afterLunch.todayWorkedSeconds)
-    }
-    @Test fun wishZeroNormalAndHugeAmounts() {
-        val salary = at("10:30:00")
-        assertEquals(0, WishCalculator.calculate(BigDecimal.ZERO,salary).seconds.compareTo(BigDecimal.ZERO))
-        val result = WishCalculator.calculate(BigDecimal("8999"), salary)
-        assertEquals(0.8999, result.months.toDouble(), 0.0000001)
-        assertEquals(19.7978, result.days.toDouble(), 0.0000001)
-        assertTrue(WishCalculator.calculate(BigDecimal("999999999999999999999999"),salary).hours > BigDecimal.ZERO)
     }
     @Test fun retirementOfficialTableBoundariesAndCategories() {
         val calc = RetirementCalculator(calendar)
@@ -141,7 +132,5 @@ class DomainTest {
     @Test(expected=IllegalArgumentException::class) fun invertedLunchRejected() { settings.copy(lunchEnd=LocalTime.of(12,0)) }
     @Test(expected=IllegalArgumentException::class) fun overlappingWorkRejected() { settings.copy(workStart=settings.lunchStart) }
     @Test(expected=IllegalArgumentException::class) fun invalidPaydayRejected() { settings.copy(salaryDay=32) }
-    @Test(expected=IllegalArgumentException::class) fun negativeWishRejected() { WishCalculator.calculate(BigDecimal("-1"),at("10:00:00")) }
     @Test(expected=IllegalArgumentException::class) fun futureBirthRejected() { RetirementCalculator(calendar).calculate(LocalDate.of(2030,1,1),RetirementType.MALE,LocalDate.of(2026,1,1)) }
 }
-

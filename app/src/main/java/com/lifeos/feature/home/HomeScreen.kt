@@ -1,96 +1,129 @@
 package com.lifeos.feature.home
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifeos.app.ScreenState
-import com.lifeos.core.ui.*
-import com.lifeos.domain.WishStatus
+import com.lifeos.core.ui.CalendarWarning
+import com.lifeos.core.ui.Lime
+import com.lifeos.core.ui.Metric
+import com.lifeos.core.ui.MotivationTextProvider
+import com.lifeos.core.ui.Panel
+import com.lifeos.core.ui.currency
+import com.lifeos.core.ui.timer
 import com.lifeos.domain.salary.WorkState
-import com.lifeos.domain.wish.WishCalculator
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-@Composable fun HomeScreen(data: ScreenState.Ready, openWishes: () -> Unit, openSettings: () -> Unit) {
-    val s=data.salary
-    val working=s.state==WorkState.WORKING || s.state==WorkState.WORKING_AFTERNOON
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal=20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+@Composable
+fun NowScreen(data: ScreenState.Ready) {
+    val salary = data.salary
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         Spacer(Modifier.height(8.dp))
-        Text("牛马驱动器",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
-        Text(s.now.format(DateTimeFormatter.ofPattern("M月d日 · EEEE",Locale.CHINA)),style=MaterialTheme.typography.bodyMedium)
-        CalendarWarning(s.calendarWarning)
-        Panel(green=true) {
-            Text(MotivationTextProvider.title(s.state),style=MaterialTheme.typography.titleMedium,color=Lime)
-            Spacer(Modifier.height(2.dp))
-            Text("今日已赚",style=MaterialTheme.typography.labelLarge)
-            Text(currency(s.todayEarned),fontSize=42.sp,lineHeight=48.sp,fontFamily=FontFamily.Monospace,fontWeight=FontWeight.Bold)
-            if(working) {
-                val transition=rememberInfiniteTransition(label="earning")
-                val alpha by transition.animateFloat(.4f,1f,infiniteRepeatable(tween(950),RepeatMode.Reverse),label="pulse")
-                Text("● 每一秒，都在变现",Modifier.alpha(alpha),color=Lime,style=MaterialTheme.typography.labelMedium)
-            } else Text(if(s.state==WorkState.HOLIDAY) "工资计时器暂停营业" else "收入按有效工作时间计算",style=MaterialTheme.typography.labelMedium)
-            HorizontalDivider(color=Lime.copy(alpha=.2f))
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(20.dp)) {
-                Metric("已工作",timer(s.todayWorkedSeconds),Modifier.weight(1f))
-                Metric(when(s.state) {
-                    WorkState.BEFORE_WORK -> "距离开工"
-                    WorkState.LUNCH_BREAK -> "午休剩余"
-                    WorkState.AFTER_WORK -> "今日已完成"
-                    WorkState.HOLIDAY -> "今日休息"
-                    else -> "距离下班"
-                },timer(s.countdownSeconds),Modifier.weight(1f))
+        Text("当下", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(salary.now.format(DateTimeFormatter.ofPattern("M月d日 · EEEE", Locale.CHINA)))
+        CalendarWarning(salary.calendarWarning)
+
+        Panel(green = true) {
+            Text(statusTitle(data), style = MaterialTheme.typography.titleMedium, color = Lime)
+            Text("今日已赚", style = MaterialTheme.typography.labelLarge)
+            Text(
+                currency(salary.todayEarned),
+                fontSize = 42.sp,
+                lineHeight = 48.sp,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+            )
+            if (salary.state == WorkState.WORKING && data.settings.animationsEnabled) {
+                val transition = rememberInfiniteTransition(label = "earning")
+                val alpha by transition.animateFloat(
+                    initialValue = .4f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+                    label = "earning pulse",
+                )
+                Text("● 时间正在转换成钱", Modifier.alpha(alpha), color = Lime)
             }
-            Text("今日牛马进度  ${(s.todayProgress*100).toInt()}%",style=MaterialTheme.typography.labelLarge)
-            LinearProgressIndicator(progress={s.todayProgress.toFloat()},Modifier.fillMaxWidth().height(7.dp),color=Lime,trackColor=Lime.copy(alpha=.16f))
-            Text(MotivationTextProvider.message(s.state,s.todayProgress),style=MaterialTheme.typography.bodySmall)
-        }
-        Panel {
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-                Text("💰 本月已赚",style=MaterialTheme.typography.titleMedium)
-                Text("${decimal((s.monthProgress*100).toBigDecimal())}%",color=Forest)
+            HorizontalDivider(color = Lime.copy(alpha = .2f))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Metric("已工作", duration(salary.todayWorkedSeconds), Modifier.weight(1f))
+                Metric(countdownLabel(salary.state), timer(salary.countdownSeconds), Modifier.weight(1f))
             }
-            Text(currency(s.monthEarned),style=MaterialTheme.typography.headlineMedium,fontFamily=FontFamily.Monospace,fontWeight=FontWeight.Bold)
-            LinearProgressIndicator(progress={s.monthProgress.toFloat()},modifier=Modifier.fillMaxWidth())
-            Text("已完成 ${s.completedWorkDays} / ${s.monthlyWorkDays} 个工作日 · 剩余 ${s.monthlyWorkDays-s.completedWorkDays} 天",style=MaterialTheme.typography.bodySmall)
+            Text("今日进度 ${(salary.todayProgress * 100).toInt()}%")
+            LinearProgressIndicator(
+                progress = { salary.todayProgress.toFloat() },
+                modifier = Modifier.fillMaxWidth().height(7.dp),
+                color = Lime,
+                trackColor = Lime.copy(alpha = .16f),
+            )
+            if (data.settings.funModeEnabled) Text(MotivationTextProvider.message(salary.state, salary.todayProgress))
         }
+
         Panel {
-            Text("💸 距离发薪",style=MaterialTheme.typography.titleMedium)
-            Text(if(s.isPayday) "今天发工资！" else "${s.paydaySeconds/86400}天 ${s.paydaySeconds/3600%24}小时",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-            Text(if(s.isPayday) "今天是约定发薪日，具体到账看老板。" else "${s.payday.toLocalDate()} · 再坚持一下，账户就会回血。",style=MaterialTheme.typography.bodySmall)
+            Text("💼 本月已赚", style = MaterialTheme.typography.titleLarge)
+            Text(currency(salary.monthEarned), style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+            Text("月工资总额 ${currency(data.settings.monthlySalary)}")
+            LinearProgressIndicator(progress = { salary.monthProgress.toFloat() }, modifier = Modifier.fillMaxWidth())
+            Text("本月进度 ${(salary.monthProgress * 100).toInt()}% · 已完成 ${salary.completedWorkDays} / ${salary.monthlyWorkDays} 个工作日")
         }
+
         Panel {
-            Text("🏖 退休倒计时",style=MaterialTheme.typography.titleMedium)
-            val r=data.retirement
-            if(r==null) {
-                Text("给漫长的打工生涯，一个盼头。")
-                TextButton(onClick=openSettings) { Text("设置退休信息 →") }
-            } else {
-                Text(if(r.reached) "已达到法定退休年龄" else "${r.remaining.years}年 ${r.remaining.months}个月 ${r.remaining.days}天",style=MaterialTheme.typography.titleLarge)
-                Text("预计还需 ${r.estimatedWorkdays} 个工作日",style=MaterialTheme.typography.bodyMedium)
-                Text("法定退休年月 ${r.date.year}-${r.date.monthValue}；按生日估算至 ${r.date}。未来工作日与具体日期为预计值。",style=MaterialTheme.typography.bodySmall)
-            }
+            Text("📅 距离发薪日", style = MaterialTheme.typography.titleLarge)
+            Text(salary.payday.toLocalDate().toString(), style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (salary.isPayday) "今天发工资" else "${salary.paydaySeconds / 86_400} 天 ${salary.paydaySeconds / 3_600 % 24} 小时",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            if (data.settings.funModeEnabled && !salary.isPayday) Text("再坚持一下，工资在向你招手。")
         }
-        Panel {
-            Text("🎁 最近心愿",style=MaterialTheme.typography.titleMedium)
-            val wish=data.wishes.firstOrNull { it.status==WishStatus.WISHING }
-            if(wish==null) Text("把想要的快乐，换算成打工时光。") else {
-                Text(wish.name,style=MaterialTheme.typography.titleLarge)
-                Text(currency(wish.price))
-                if(s.salaryPerSecond.signum()>0) Text("≈ ${decimal(WishCalculator.calculate(wish.price,s).days)} 个工作日")
-            }
-            TextButton(onClick=openWishes) { Text("去牛马兑换中心 →") }
-        }
-        Text("看着时间，一秒一秒变成钱。",style=MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
     }
 }
+
+private fun statusTitle(data: ScreenState.Ready): String = if (data.settings.funModeEnabled) {
+    MotivationTextProvider.title(data.salary.state)
+} else when (data.salary.state) {
+    WorkState.BEFORE_WORK -> "尚未开始工作"
+    WorkState.WORKING -> "工作中"
+    WorkState.LUNCH_BREAK -> "午休中"
+    WorkState.AFTER_WORK -> "今日工作完成"
+    WorkState.HOLIDAY -> "今天不是工作日"
+}
+
+private fun countdownLabel(state: WorkState) = when (state) {
+    WorkState.BEFORE_WORK -> "距离上班"
+    WorkState.WORKING -> "距离下班"
+    WorkState.LUNCH_BREAK -> "午休剩余"
+    WorkState.AFTER_WORK -> "今日已完成"
+    WorkState.HOLIDAY -> "今日休息"
+}
+
+private fun duration(seconds: Long): String = "${seconds / 3_600}小时${seconds / 60 % 60}分钟"
