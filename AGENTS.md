@@ -1,9 +1,9 @@
 # Project Overview
-牛马驱动器是以本地计算为核心的 Android 实时收入计时器，产品需求以根目录 PRD 为准。
+个人 Life OS 是围绕时间、钱和选择的 Android 应用。当前需求基线为 `req/需求文档V2.0.docx`；V1 仅用于历史追溯，冲突时以 V2 为准。
 # Tech Stack
 Kotlin / Compose Material 3 / Navigation / ViewModel / Flow / Room / DataStore；纯 JVM domain 模块。
 # Important Business Rules
-时间是唯一事实来源；午休不计薪；法定调休覆盖普通周规则；金额用 BigDecimal；不保存累计金额；仅日历更新允许联网，不上传用户数据。
+系统时钟是当前时刻唯一事实来源；午休启用时不计薪，默认 09:30—19:00、12:30—14:00 午休、有效 8 小时；法定调休覆盖普通周规则；金额用 BigDecimal；不保存累计金额；公开时间和工作日信息允许联网，不上传用户数据。
 # Architecture
 :domain 为业务计算，:app 为本地数据、状态与 UI。详见 docs/ARCHITECTURE.md。
 # Before Coding

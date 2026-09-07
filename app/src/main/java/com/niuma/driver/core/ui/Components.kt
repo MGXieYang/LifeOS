@@ -47,7 +47,7 @@ fun timer(seconds: Long): String {
 object MotivationTextProvider {
     fun title(state: WorkState) = when(state) {
         WorkState.BEFORE_WORK -> "😴 牛马尚未上线"
-        WorkState.WORKING -> "🐂 牛马驱动器运行中"
+        WorkState.WORKING, WorkState.WORKING_MORNING -> "🐂 牛马驱动器运行中"
         WorkState.LUNCH_BREAK -> "🍚 正在补充牛马燃料"
         WorkState.WORKING_AFTERNOON -> "🐂 下午场已启动"
         WorkState.AFTER_WORK -> "🏃 下班，任务完成！"
@@ -55,7 +55,7 @@ object MotivationTextProvider {
     }
     fun message(state: WorkState, progress: Double) = when(state) {
         WorkState.BEFORE_WORK -> "珍惜现在，这是今天最后的自由时光。"
-        WorkState.WORKING, WorkState.WORKING_AFTERNOON -> if(progress > .8) "胜利在望，再坚持一下就能撤离工位。" else "至少这一秒，是有工资的。"
+        WorkState.WORKING, WorkState.WORKING_MORNING, WorkState.WORKING_AFTERNOON -> if(progress > .8) "胜利在望，再坚持一下就能撤离工位。" else "至少这一秒，是有工资的。"
         WorkState.LUNCH_BREAK -> "放心吃，这段时间老板买不到。"
         WorkState.AFTER_WORK -> "今天的牛马任务已完成，请立即撤离工位。"
         WorkState.HOLIDAY -> "好好休息，资本家今天买不到你。"

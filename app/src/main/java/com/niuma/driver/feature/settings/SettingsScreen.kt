@@ -16,10 +16,15 @@ import com.niuma.driver.domain.*
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Clock
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @Composable fun SettingsScreen(initial: UserSettings, calendarDescription: String,
     save: (UserSettings,(String?) -> Unit) -> Unit,
     updateCalendar: (Int,(String) -> Unit) -> Unit,
+    exportBackup: (Uri,(String?) -> Unit) -> Unit = {_,done->done("当前入口不可用")},
+    importBackup: (Uri,(String?) -> Unit) -> Unit = {_,done->done("当前入口不可用")},
     onboarding: Boolean = false,
 ) {
     var salary by rememberSaveable { mutableStateOf(initial.monthlySalary.money()) }
@@ -30,11 +35,21 @@ import java.time.Clock
     var payday by rememberSaveable { mutableStateOf(initial.salaryDay.toString()) }
     var birth by rememberSaveable { mutableStateOf(initial.birthDate?.toString() ?: "") }
     var type by rememberSaveable { mutableStateOf(initial.retirementType) }
+    var lunchEnabled by rememberSaveable { mutableStateOf(initial.lunchBreakEnabled) }
+    var freeEnabled by rememberSaveable { mutableStateOf(initial.freeTimeEnabled) }
+    var sleep by rememberSaveable { mutableStateOf(initial.sleepMinutes.toString()) }
+    var commute by rememberSaveable { mutableStateOf(initial.commuteMinutes.toString()) }
+    var necessaryEnabled by rememberSaveable { mutableStateOf(initial.necessaryLifeEnabled) }
+    var necessary by rememberSaveable { mutableStateOf(initial.necessaryLifeMinutes.toString()) }
+    var animations by rememberSaveable { mutableStateOf(initial.animationsEnabled) }
+    var funMode by rememberSaveable { mutableStateOf(initial.funModeEnabled) }
     var step by rememberSaveable { mutableIntStateOf(0) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     var message by rememberSaveable { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var updating by remember { mutableStateOf(false) }
+    val exporter=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")){uri->uri?.let{exportBackup(it){message=it?:"备份已导出"}}}
+    val importer=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->uri?.let{importBackup(it){message=it?:"备份已导入"}}}
     fun readSettings(): UserSettings {
         require(Regex("[0-9]+(\\.[0-9]{1,2})?").matches(salary.trim())) { "请输入税后月薪，最多两位小数" }
         val birthday=if(birth.isBlank()) null else runCatching { LocalDate.parse(birth.trim()) }.getOrElse { error("出生日期格式应为 YYYY-MM-DD") }
@@ -43,8 +58,13 @@ import java.time.Clock
             require(Regex("[0-2][0-9]:[0-5][0-9]").matches(value.trim())) { "时间格式应为 HH:mm，例如 09:30" }
             return runCatching { LocalTime.parse(value.trim()) }.getOrElse { error("请输入有效时间") }
         }
-        return UserSettings(salary.trim().toBigDecimal(),time(start),time(lunchStart),time(lunchEnd),time(end),
-            payday.toIntOrNull() ?: error("发薪日请输入 1～31 的整数"),birthday,type,true)
+        return UserSettings(monthlySalary=salary.trim().toBigDecimal(),workStart=time(start),lunchStart=time(lunchStart),
+            lunchEnd=time(lunchEnd),workEnd=time(end),lunchBreakEnabled=lunchEnabled,
+            salaryDay=payday.toIntOrNull() ?: error("发薪日请输入 1～31 的整数"),birthDate=birthday,retirementType=type,
+            freeTimeEnabled=freeEnabled,sleepMinutes=sleep.toIntOrNull()?:error("请输入睡眠分钟数"),
+            commuteMinutes=commute.toIntOrNull()?:error("请输入通勤分钟数"),necessaryLifeEnabled=necessaryEnabled,
+            necessaryLifeMinutes=necessary.toIntOrNull()?:error("请输入必要生活分钟数"),animationsEnabled=animations,
+            funModeEnabled=funMode,currencySymbol=initial.currencySymbol,moneyDecimals=initial.moneyDecimals,onboarded=true)
     }
     fun submit() {
         val result=runCatching { readSettings() }
@@ -69,8 +89,8 @@ import java.time.Clock
         if(!onboarding || step==1) Panel {
             Text("自定义你的营业时间",style=MaterialTheme.typography.titleLarge)
             Input("上班 HH:mm",start,{start=it})
-            Input("午休开始 HH:mm",lunchStart,{lunchStart=it})
-            Input("午休结束 HH:mm",lunchEnd,{lunchEnd=it})
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text("启用午休",Modifier.padding(top=12.dp));Switch(lunchEnabled,{lunchEnabled=it}) }
+            if(lunchEnabled) { Input("午休开始 HH:mm",lunchStart,{lunchStart=it});Input("午休结束 HH:mm",lunchEnd,{lunchEnd=it}) }
             Input("下班 HH:mm",end,{end=it})
             Text("四个时间均可修改。午休不计薪，保存后立即重算；暂不支持跨夜班。",style=MaterialTheme.typography.bodySmall)
         }
@@ -86,6 +106,19 @@ import java.time.Clock
                 Row { RadioButton(selected=type==value,onClick={type=value});TextButton(onClick={type=value}) {Text(label)} }
             }
             Text("按一般职工法定年龄估算，具体日按生日推算；不包含特殊工种和弹性退休。",style=MaterialTheme.typography.bodySmall)
+        }
+        if(!onboarding) Panel {
+            Text("生活时间",style=MaterialTheme.typography.titleLarge)
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("启用自由时间模型");Switch(freeEnabled,{freeEnabled=it})}
+            Input("每日睡眠（分钟）",sleep,{sleep=it},KeyboardType.Number)
+            Input("每日往返通勤（分钟）",commute,{commute=it},KeyboardType.Number)
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("计入必要生活时间");Switch(necessaryEnabled,{necessaryEnabled=it})}
+            if(necessaryEnabled) Input("必要生活（分钟）",necessary,{necessary=it},KeyboardType.Number)
+        }
+        if(!onboarding) Panel {
+            Text("显示",style=MaterialTheme.typography.titleLarge)
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("动效");Switch(animations,{animations=it})}
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("趣味文案");Switch(funMode,{funMode=it})}
         }
         if(onboarding && step==4) Panel(green=true) {
             Text("准备好了，开始变现。",style=MaterialTheme.typography.titleLarge,color=Lime)
@@ -123,6 +156,12 @@ import java.time.Clock
                 }
                 if(updating) Text("正在检查日历…")
             }
+            Panel {
+                Text("数据",style=MaterialTheme.typography.titleLarge)
+                Text("个人数据默认只保存在本机。建议定期导出 JSON 备份。",style=MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton({exporter.launch("life-os-backup-${LocalDate.now()}.json")}){Text("导出备份")};OutlinedButton({importer.launch(arrayOf("application/json","text/plain"))}){Text("导入备份")}}
+            }
+            Panel {Text("关于",style=MaterialTheme.typography.titleLarge);Text("Life OS 2.0 · 当前需求基线 V2.0")}
         }
         Spacer(Modifier.height(12.dp))
     }

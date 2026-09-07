@@ -22,19 +22,19 @@ class DomainTest {
     @Test fun acceptanceExamplesAndStateBoundaries() {
         val cases = listOf(
             Triple("09:29:59", "0.00", WorkState.BEFORE_WORK),
-            Triple("09:30:00", "0.00", WorkState.WORKING),
-            Triple("10:30:00", "53.48", WorkState.WORKING),
-            Triple("12:30:00", "160.43", WorkState.LUNCH_BREAK),
-            Triple("13:30:00", "160.43", WorkState.LUNCH_BREAK),
-            Triple("14:00:00", "160.43", WorkState.WORKING_AFTERNOON),
-            Triple("15:00:00", "213.90", WorkState.WORKING_AFTERNOON),
-            Triple("19:30:00", "454.55", WorkState.AFTER_WORK),
+            Triple("09:30:00", "0.00", WorkState.WORKING_MORNING),
+            Triple("10:30:00", "56.82", WorkState.WORKING_MORNING),
+            Triple("12:30:00", "170.45", WorkState.LUNCH_BREAK),
+            Triple("13:30:00", "170.45", WorkState.LUNCH_BREAK),
+            Triple("14:00:00", "170.45", WorkState.WORKING_AFTERNOON),
+            Triple("15:00:00", "227.27", WorkState.WORKING_AFTERNOON),
+            Triple("19:00:00", "454.55", WorkState.AFTER_WORK),
             Triple("23:59:59", "454.55", WorkState.AFTER_WORK))
         cases.forEach { (time, amount, state) ->
             assertEquals(time, amount, at(time).todayEarned.money())
             assertEquals(state, at(time).state)
         }
-        assertEquals(30600L, at("19:30:00").todayWorkedSeconds)
+        assertEquals(28800L, at("19:00:00").todayWorkedSeconds)
         assertEquals(22, at("10:00:00").monthlyWorkDays)
     }
     @Test fun calendarWeekdayHolidayAndWeekendOverride() {
@@ -78,11 +78,11 @@ class DomainTest {
         val instant = Instant.parse("2026-09-07T02:30:00Z")
         val china = calculator.calculate(settings, Clock.fixed(instant, ZoneId.of("Asia/Shanghai")))
         val utc = calculator.calculate(settings, Clock.fixed(instant, ZoneOffset.UTC))
-        assertEquals("53.48", china.todayEarned.money())
+        assertEquals("56.82", china.todayEarned.money())
         assertEquals("0.00", utc.todayEarned.money())
         val twice = calculator.calculate(settings.copy(monthlySalary=BigDecimal("20000")), china.now)
         assertTrue((twice.todayEarned - china.todayEarned * BigDecimal(2)).abs() < BigDecimal("1E-28"))
-        assertEquals("106.95", twice.todayEarned.money())
+        assertEquals("113.64", twice.todayEarned.money())
         assertEquals(china, calculator.calculate(settings, china.now))
     }
     @Test fun worktimeModificationRecalculates() {

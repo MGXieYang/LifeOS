@@ -18,10 +18,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import com.niuma.driver.core.ui.NiuMaTheme
-import com.niuma.driver.feature.home.HomeScreen
 import com.niuma.driver.feature.settings.SettingsScreen
 import com.niuma.driver.feature.statistics.StatisticsScreen
-import com.niuma.driver.feature.wish.WishScreen
+import com.niuma.driver.feature.v2.*
 
 class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,18 +52,20 @@ class MainActivity: ComponentActivity() {
 @Composable private fun MainNavigation(data: ScreenState.Ready,vm: AppViewModel) {
     val nav=rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
-    val route=entry?.destination?.route ?: "home"
-    val pages=listOf(Triple("home","首页",Icons.Outlined.Home),Triple("wish","心愿",Icons.Outlined.CardGiftcard),
-        Triple("statistics","统计",Icons.Outlined.BarChart),Triple("settings","设置",Icons.Outlined.Settings))
-    fun navigate(target: String) { nav.navigate(target) {popUpTo("home") {saveState=true};launchSingleTop=true;restoreState=true} }
-    Scaffold(bottomBar={NavigationBar { pages.forEach { (target,label,icon) ->
+    val route=entry?.destination?.route ?: "now"
+    val pages=listOf(Triple("now","当下",Icons.Outlined.Home),Triple("balance","天平",Icons.Outlined.Balance),
+        Triple("time","时间",Icons.Outlined.Schedule),Triple("decision","决策",Icons.Outlined.FactCheck))
+    fun navigate(target: String) { nav.navigate(target) {popUpTo("now") {saveState=true};launchSingleTop=true;restoreState=true} }
+    Scaffold(bottomBar={if(route in pages.map{it.first}) NavigationBar { pages.forEach { (target,label,icon) ->
         NavigationBarItem(selected=route==target,onClick={navigate(target)},icon={Icon(icon,contentDescription=label)},label={Text(label)})
     }}}) { padding ->
-        NavHost(navController=nav,startDestination="home",modifier=Modifier.padding(padding)) {
-            composable("home") {HomeScreen(data,{navigate("wish")},{navigate("settings")})}
-            composable("wish") {WishScreen(data,vm::saveWish,vm::deleteWish)}
-            composable("statistics") {StatisticsScreen(data)}
-            composable("settings") {SettingsScreen(data.settings,data.calendarDescription,vm::saveSettings,vm::updateCalendar)}
+        NavHost(navController=nav,startDestination="now",modifier=Modifier.padding(padding)) {
+            composable("now") {NowScreen(data,{nav.navigate("work")},{nav.navigate("settings")})}
+            composable("balance") {BalanceScreen(data,vm::saveBalance,vm::deleteBalance,vm::pinBalance)}
+            composable("time") {TimeScreen(data,vm::saveNode,vm::deleteNode)}
+            composable("decision") {DecisionScreen(data,vm::saveDecision,vm::deleteDecision,vm::saveReview)}
+            composable("work") {StatisticsScreen(data)}
+            composable("settings") {SettingsScreen(data.settings,data.calendarDescription,vm::saveSettings,vm::updateCalendar,vm::exportBackup,vm::importBackup)}
         }
     }
 }

@@ -5,19 +5,27 @@ import androidx.lifecycle.viewModelScope
 import com.niuma.driver.domain.*
 import com.niuma.driver.domain.salary.*
 import com.niuma.driver.domain.retirement.*
+import com.niuma.driver.domain.balance.*
+import com.niuma.driver.domain.decision.*
+import com.niuma.driver.domain.freetime.*
+import com.niuma.driver.domain.lifetime.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDateTime
+import android.net.Uri
 
 sealed interface ScreenState {
     data object Loading: ScreenState
     data class Failed(val message: String): ScreenState
     data class Ready(val settings: UserSettings, val salary: SalaryResult, val wishes: List<WishItem>,
-        val retirement: RetirementResult?, val calendarDescription: String): ScreenState
+        val retirement: RetirementResult?, val calendarDescription: String,
+        val balances:List<BalanceItem>, val nodes:List<LifeNode>, val decisions:List<Decision>,
+        val reviews:List<DecisionReview>, val freeTime:FreeTimeResult, val annual:AnnualBalance): ScreenState
 }
+private data class Stored(val settings:UserSettings,val wishes:List<WishItem>,val balances:List<BalanceItem>,val nodes:List<LifeNode>,val decisions:List<Decision>,val reviews:List<DecisionReview>)
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class AppViewModel(private val app: NiuMaApplication): ViewModel() {
     private val calculator get() = SalaryCalculator(app.calendar)
@@ -32,7 +40,11 @@ class AppViewModel(private val app: NiuMaApplication): ViewModel() {
     private var retirementCache: RetirementResult? = null
     private val refresh = MutableStateFlow(0)
     val state: StateFlow<ScreenState> = refresh.flatMapLatest {
-        combine(app.settings.settings, app.wishes.wishes, clock) { settings,wishes,now ->
+        val stored=combine(app.settings.settings,app.wishes.wishes,app.life.balances,app.life.nodes,app.life.decisions,app.life.reviews) { values ->
+            @Suppress("UNCHECKED_CAST") Stored(values[0] as UserSettings,values[1] as List<WishItem>,values[2] as List<BalanceItem>,values[3] as List<LifeNode>,values[4] as List<Decision>,values[5] as List<DecisionReview>)
+        }
+        combine(stored, clock) { data,now ->
+            val settings=data.settings; val wishes=data.wishes
             val key = Triple(settings.birthDate,settings.retirementType,now.toLocalDate())
             if (key != retirementKey) {
                 retirementCache = settings.birthDate?.takeIf { it <= now.toLocalDate() }?.let {
@@ -44,7 +56,8 @@ class AppViewModel(private val app: NiuMaApplication): ViewModel() {
                 app.calendar.coveredYears.joinToString("、") { year ->
                     val meta = app.calendar.metadata(year)!!
                     "$year（${meta.version}，更新 ${meta.lastUpdated}）"
-                }) as ScreenState
+                },data.balances,data.nodes,data.decisions,data.reviews,
+                FreeTimeCalculator.calculate(settings),LifeTimeCalculator(app.calendar).annual(now.toLocalDate())) as ScreenState
         }.catch { emit(ScreenState.Failed(it.message ?: "本地数据读取失败")) }
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope,SharingStarted.WhileSubscribed(0),ScreenState.Loading)
     fun retry() { refresh.value++ }
@@ -68,6 +81,17 @@ class AppViewModel(private val app: NiuMaApplication): ViewModel() {
     fun deleteWish(id: Long, done: (String?) -> Unit) {
         viewModelScope.launch { runCatching { app.wishes.delete(id) }.fold({ done(null) }, { done(it.message ?: "删除失败，请重试") }) }
     }
+    fun saveBalance(item:BalanceItem,done:(String?)->Unit)=launch(done){app.life.save(item)}
+    fun deleteBalance(id:Long,done:(String?)->Unit)=launch(done){app.life.deleteBalance(id)}
+    fun pinBalance(id:Long?,done:(String?)->Unit)=launch(done){app.life.pin(id)}
+    fun saveNode(item:LifeNode,done:(String?)->Unit)=launch(done){app.life.save(item)}
+    fun deleteNode(id:Long,done:(String?)->Unit)=launch(done){app.life.deleteNode(id)}
+    fun saveDecision(item:Decision,done:(String?)->Unit)=launch(done){app.life.save(item)}
+    fun deleteDecision(id:Long,done:(String?)->Unit)=launch(done){app.life.deleteDecision(id)}
+    fun saveReview(item:DecisionReview,done:(String?)->Unit)=launch(done){app.life.save(item)}
+    fun exportBackup(uri:Uri,done:(String?)->Unit)=launch(done){app.backup.export(uri)}
+    fun importBackup(uri:Uri,done:(String?)->Unit)=launch(done){app.backup.import(uri)}
+    private fun launch(done:(String?)->Unit,block:suspend()->Unit){viewModelScope.launch{runCatching{block()}.fold({done(null)},{done(it.message?:"操作失败")})}}
 }
 
 

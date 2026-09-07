@@ -22,9 +22,19 @@ class SettingsRepository(private val context: Context) {
         val lunchStart = stringPreferencesKey("lunch_start")
         val lunchEnd = stringPreferencesKey("lunch_end")
         val end = stringPreferencesKey("end")
+        val lunchEnabled = booleanPreferencesKey("lunch_enabled")
         val payday = intPreferencesKey("payday")
         val birth = stringPreferencesKey("birth")
         val type = stringPreferencesKey("retirement_type")
+        val freeEnabled = booleanPreferencesKey("free_enabled")
+        val sleep = intPreferencesKey("sleep_minutes")
+        val commute = intPreferencesKey("commute_minutes")
+        val necessaryEnabled = booleanPreferencesKey("necessary_enabled")
+        val necessary = intPreferencesKey("necessary_minutes")
+        val animations = booleanPreferencesKey("animations")
+        val funMode = booleanPreferencesKey("fun_mode")
+        val currency = stringPreferencesKey("currency")
+        val decimals = intPreferencesKey("money_decimals")
         val onboarded = booleanPreferencesKey("onboarded")
     }
     val settings: Flow<UserSettings> = context.settingsStore.data.map { p ->
@@ -33,10 +43,20 @@ class SettingsRepository(private val context: Context) {
             workStart=LocalTime.parse(p[Keys.start] ?: "09:30"),
             lunchStart=LocalTime.parse(p[Keys.lunchStart] ?: "12:30"),
             lunchEnd=LocalTime.parse(p[Keys.lunchEnd] ?: "14:00"),
-            workEnd=LocalTime.parse(p[Keys.end] ?: "19:30"),
+            workEnd=LocalTime.parse(p[Keys.end] ?: "19:00"),
+            lunchBreakEnabled=p[Keys.lunchEnabled] ?: true,
             salaryDay=p[Keys.payday] ?: 7,
             birthDate=p[Keys.birth]?.let(LocalDate::parse),
             retirementType=RetirementType.valueOf(p[Keys.type] ?: "MALE"),
+            freeTimeEnabled=p[Keys.freeEnabled] ?: false,
+            sleepMinutes=p[Keys.sleep] ?: 480,
+            commuteMinutes=p[Keys.commute] ?: 0,
+            necessaryLifeEnabled=p[Keys.necessaryEnabled] ?: true,
+            necessaryLifeMinutes=p[Keys.necessary] ?: 120,
+            animationsEnabled=p[Keys.animations] ?: true,
+            funModeEnabled=p[Keys.funMode] ?: true,
+            currencySymbol=p[Keys.currency] ?: "¥",
+            moneyDecimals=p[Keys.decimals] ?: 2,
             onboarded=p[Keys.onboarded] ?: false,
         )
     }
@@ -45,8 +65,13 @@ class SettingsRepository(private val context: Context) {
             p[Keys.salary]=s.monthlySalary.money()
             p[Keys.start]=s.workStart.toString(); p[Keys.end]=s.workEnd.toString()
             p[Keys.lunchStart]=s.lunchStart.toString(); p[Keys.lunchEnd]=s.lunchEnd.toString()
+            p[Keys.lunchEnabled]=s.lunchBreakEnabled
             p[Keys.payday]=s.salaryDay; p[Keys.type]=s.retirementType.name
             p[Keys.onboarded]=s.onboarded
+            p[Keys.freeEnabled]=s.freeTimeEnabled; p[Keys.sleep]=s.sleepMinutes; p[Keys.commute]=s.commuteMinutes
+            p[Keys.necessaryEnabled]=s.necessaryLifeEnabled; p[Keys.necessary]=s.necessaryLifeMinutes
+            p[Keys.animations]=s.animationsEnabled; p[Keys.funMode]=s.funModeEnabled
+            p[Keys.currency]=s.currencySymbol; p[Keys.decimals]=s.moneyDecimals
             if(s.birthDate == null) p.remove(Keys.birth) else p[Keys.birth]=s.birthDate.toString()
         }
     }
