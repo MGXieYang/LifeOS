@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <application android:name=".app.NiuMaApplication" android:label="Life OS"
+    <application android:name=".app.LifeOsApplication" android:label="Life OS"
         android:icon="@drawable/ic_launcher" android:allowBackup="false" android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:supportsRtl="true" android:theme="@style/Theme.NiuMa">
+        android:supportsRtl="true" android:theme="@style/Theme.LifeOS">
         <activity android:name=".app.MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

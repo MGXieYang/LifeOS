@@ -5,14 +5,14 @@ plugins {
     id("com.google.devtools.ksp")
 }
 android {
-    namespace = "com.niuma.driver"
+    namespace = "com.lifeos"
     compileSdk = 35
     defaultConfig {
-        applicationId = "com.niuma.driver"
+        applicationId = "com.lifeos"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "0.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }

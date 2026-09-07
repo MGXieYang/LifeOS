@@ -6,4 +6,4 @@ Room WishEntity：id 自增 Long 主键；name；price 十进制字符串；rema
 
 日历缓存 calendar-cache.json 保存年度原始响应及 updated 日期；只含公开日历数据，AtomicFile 事务替换，失败保留此前缓存。
 # V2 数据模型补充
-`balance_items` 保存天平项目、状态、单一置顶标记、使用与持有成本；`life_nodes` 保存年龄或日期节点；`decisions` 保存决策过程和复盘日期；`decision_reviews` 保存结果评价。`life-os.db` 是 V2 主库，V1 `niuma.db/wishes` 只作为一次性迁移源。DataStore 增加午休开关、自由时间参数、动效与趣味文案设置。JSON 备份格式版本为 2，导入按主键合并。
+`balance_items` 保存天平项目、状态、单一置顶标记、使用与持有成本；`life_nodes` 保存年龄或日期节点；`decisions` 保存决策过程和复盘日期；`decision_reviews` 保存结果评价。`life-os.db` 是 V2 主库，`legacy-v1.db/wishes` 只作为兼容迁移源。DataStore 增加午休开关、自由时间参数、动效与趣味文案设置。JSON 备份格式版本为 2，导入按主键合并。
