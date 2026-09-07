@@ -1,0 +1,44 @@
+# 牛马驱动器 NiuMaDriver
+
+看着时间，一秒一秒变成钱。原生 Android V1，最低 Android 8.0（API 26）。
+
+## 已实现
+
+- 首次引导、设置：税后月薪；可分别自定义上班、午休开始、午休结束、下班时间；自定义每月 1～31 号发薪日；可选出生日期及三类退休人员类别。
+- 首页：基于系统时间的秒级收入、六种工作状态、午休暂停、今日/月度进度、下班/发薪/退休倒计时。
+- 心愿：本机增删改、实现与取消实现、排序、按当前月薪折算小时/工作日/工作月。
+- 统计：月度工作量、时间单价、自定义工作分钟换算。
+- 日历：内置 2025/2026 法定假期与调休，可在设置中按需联网更新当年/下一年；失败保留缓存，缺失年份显式提示估算。
+
+工资、出生日期、心愿不上传。无登录、无自建后端、无后台计时服务。联网权限仅用于获取公开日历；网络数据来自 holiday-cn 开源项目，不是官方 API。
+
+## 构建
+
+安装 JDK 17、Android SDK Platform 35 与 Build Tools 35.0.0。Android Studio 打开本目录即可同步。
+
+设置 JAVA_HOME、ANDROID_HOME，或在未提交的 local.properties 中写入 sdk.dir，然后：
+
+```powershell
+.\gradlew.bat :domain:test :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+```
+
+macOS/Linux 使用 `./gradlew`（首次可执行 `chmod +x gradlew`）。
+
+APK 输出：`app/build/outputs/apk/debug/app-debug.apk`。首次构建需联网下载 Gradle/Maven 依赖，应用离线核心计算不受影响。
+
+当前工作区已在 `.tools` 准备 JDK/Gradle/SDK；可运行 `scripts/build-local.ps1` 使用本地工具构建，无需全局安装。
+
+## 目录
+
+- `domain/`：独立 Kotlin/JVM 工资、工时、日历、退休、心愿计算及单测。
+- `app/`：Compose UI、ViewModel、Navigation、DataStore、Room、Assets 和日历网络缓存。
+- `docs/`：产品、架构、规则、数据模型、日历/退休政策、验证和待办。
+- `req/` 中的 PRD 已覆盖用户修订：允许日历联网；发薪日及上下班、午休时间支持自定义。
+
+## 业务与验收说明
+
+默认 09:30—19:30，12:30—14:00 午休，每天有效 8.5 小时；以当月真实法定工作日均摊税后月薪。
+月中修改设置立即重算全月，无历史考勤或收入记录。发薪当天显示“今天发工资”，到账情况由雇主决定。
+退休政策结果精确到月，日级倒计时按生日估算；未来工作日始终标注预计。
+
+详见 `docs/DOMAIN_RULES.md`、`docs/CALENDAR.md`、`docs/RETIREMENT.md`。
