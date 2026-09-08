@@ -39,7 +39,9 @@ import androidx.navigation.compose.rememberNavController
 import com.lifeos.core.ui.LifeOsTheme
 import com.lifeos.domain.ThemeMode
 import com.lifeos.feature.balance.BalanceScreen
+import com.lifeos.feature.balance.BalanceHistoryScreen
 import com.lifeos.feature.home.NowScreen
+import com.lifeos.feature.lifetime.AddLifeNodeScreen
 import com.lifeos.feature.lifetime.TimeScreen
 import com.lifeos.feature.onboarding.OnboardingScreen
 import com.lifeos.feature.settings.SettingsScreen
@@ -97,22 +99,28 @@ private fun MainNavigation(data: ScreenState.Ready, vm: AppViewModel) {
     }
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                pages.forEach { (target, label, icon) ->
-                    NavigationBarItem(
-                        selected = route == target,
-                        onClick = { navigate(target) },
-                        icon = { Icon(icon, contentDescription = label) },
-                        label = { Text(label) },
-                    )
+            if (route in pages.map { it.first }) {
+                NavigationBar {
+                    pages.forEach { (target, label, icon) ->
+                        NavigationBarItem(
+                            selected = route == target,
+                            onClick = { navigate(target) },
+                            icon = { Icon(icon, contentDescription = label) },
+                            label = { Text(label) },
+                        )
+                    }
                 }
             }
         },
     ) { padding ->
         NavHost(navController = nav, startDestination = "now", modifier = Modifier.padding(padding)) {
             composable("now") { NowScreen(data) }
-            composable("balance") { BalanceScreen(data, vm::saveBalance, vm::deleteBalance) }
-            composable("time") { TimeScreen(data, vm::saveNode, vm::deleteNode) }
+            composable("balance") { BalanceScreen(data, vm::saveBalance) { nav.navigate("balance/history") } }
+            composable("balance/history") {
+                BalanceHistoryScreen(data.balances, vm::deleteBalance, nav::popBackStack)
+            }
+            composable("time") { TimeScreen(data, vm::deleteNode) { nav.navigate("time/add") } }
+            composable("time/add") { AddLifeNodeScreen(vm::saveNode, nav::popBackStack) }
             composable("settings") { SettingsScreen(data.settings, data.calendarDescription, vm::saveSettings) }
         }
     }

@@ -6,10 +6,10 @@
 
 - WorkSettings：monthlySalary 十进制字符串；workStart、lunchStart、lunchEnd、workEnd 为 ISO LocalTime；lunchBreakEnabled；salaryDay 1～31。
 - PersonalSettings：birthDate 可空 ISO LocalDate；retirementType 可空 MALE/FEMALE_55/FEMALE_50。
-- DisplaySettings：animationsEnabled；funModeEnabled；themeMode 为 SYSTEM/LIGHT/DARK。
+- DisplaySettings：仅保留 themeMode，值为 SYSTEM/LIGHT/DARK；动画固定启用，不持久化动画或文案模式。
 - 内部状态：onboarded。
 
-V3SettingsMigration 删除 `free_enabled`、`sleep_minutes`、`commute_minutes`、`necessary_enabled`、`necessary_minutes`、`currency`、`money_decimals`。迁移不清空 DataStore，保存时也会移除遗留键。
+V3SettingsMigration 删除旧 FreeTime、货币格式、animations 和 fun_mode 键。
 
 ## Room 版本 2
 

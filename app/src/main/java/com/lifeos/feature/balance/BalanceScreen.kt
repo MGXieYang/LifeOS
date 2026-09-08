@@ -61,7 +61,7 @@ import java.time.LocalDateTime
 fun BalanceScreen(
     data: ScreenState.Ready,
     save: (BalanceItem, (String?) -> Unit) -> Unit,
-    delete: (Long, (String?) -> Unit) -> Unit,
+    openHistory: () -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var priceText by rememberSaveable { mutableStateOf("") }
@@ -69,7 +69,6 @@ fun BalanceScreen(
     var months by rememberSaveable { mutableStateOf("36") }
     var frequencyType by rememberSaveable { mutableStateOf(UsageFrequencyType.DAILY) }
     var frequencyValue by rememberSaveable { mutableStateOf("1") }
-    var showHistory by rememberSaveable { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
 
     val price = priceText.toBigDecimalOrNull()?.takeIf { it >= BigDecimal.ZERO && it.scale() <= 2 }
@@ -99,7 +98,7 @@ fun BalanceScreen(
                 Text("⚖ 天平", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Text("换个角度，看见选择的重量。")
             }
-            TextButton(onClick = { showHistory = !showHistory }) { Text("历史") }
+            TextButton(onClick = openHistory) { Text("历史") }
         }
         CalendarWarning(data.salary.calendarWarning)
 
@@ -114,7 +113,7 @@ fun BalanceScreen(
                 onValueChange = { priceText = it.toLong().toString() },
                 valueRange = 0f..max,
             )
-            result?.let { ScaleVisual(name, price!!, it, data.settings.animationsEnabled) }
+            result?.let { ScaleVisual(name, price!!, it, true) }
         }
 
         result?.let { value ->
@@ -150,6 +149,19 @@ fun BalanceScreen(
             }
         }
 
+        OutlinedButton(
+            onClick = {
+                name = ""
+                priceText = ""
+                advanced = false
+                months = "36"
+                frequencyType = UsageFrequencyType.DAILY
+                frequencyValue = "1"
+                message = "已重置当前称量；历史记录不会被删除。"
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("重置当前称量") }
+
         result?.let {
             Button(
                 onClick = {
@@ -169,28 +181,38 @@ fun BalanceScreen(
         }
         message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
 
-        if (showHistory) {
-            Text("称重历史", style = MaterialTheme.typography.titleLarge)
-            if (data.balances.isEmpty()) Text("还没有保存过称重项目。")
-            data.balances.forEach { item ->
-                Panel {
-                    Text(item.name.ifBlank { "未命名金额" }, style = MaterialTheme.typography.titleMedium)
-                    Text(currency(item.price), style = MaterialTheme.typography.headlineSmall)
-                    Text(item.createdAt.toLocalDate().toString())
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = {
-                            name = item.name
-                            priceText = item.price.toPlainString()
-                            advanced = item.expectedUsagePeriodMonths != null
-                            item.expectedUsagePeriodMonths?.let { months = it.toString() }
-                            item.usageFrequencyType?.let { frequencyType = it }
-                            item.usageFrequencyValue?.let { frequencyValue = it.toPlainString() }
-                        }) { Text("再次称量") }
-                        TextButton(onClick = { delete(item.id) { message = it ?: "已删除" } }) { Text("删除") }
-                    }
+        Spacer(Modifier.height(20.dp))
+    }
+}
+
+@Composable
+fun BalanceHistoryScreen(
+    items: List<BalanceItem>,
+    delete: (Long, (String?) -> Unit) -> Unit,
+    onBack: () -> Unit,
+) {
+    var message by remember { mutableStateOf<String?>(null) }
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        TextButton(onClick = onBack) { Text("← 返回天平") }
+        Text("称重历史", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text("历史记录不会自动清除，只能由你逐条手动删除。")
+        if (items.isEmpty()) {
+            Panel { Text("还没有保存过称重项目。") }
+        }
+        items.forEach { item ->
+            Panel {
+                Text(item.name.ifBlank { "未命名金额" }, style = MaterialTheme.typography.titleMedium)
+                Text(currency(item.price), style = MaterialTheme.typography.headlineSmall)
+                Text("记录于 " + item.createdAt.toLocalDate())
+                TextButton(onClick = { delete(item.id) { message = it ?: "已删除" } }) {
+                    Text("删除这条记录")
                 }
             }
         }
+        message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
         Spacer(Modifier.height(20.dp))
     }
 }

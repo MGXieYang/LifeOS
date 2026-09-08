@@ -49,12 +49,9 @@ import java.time.LocalDateTime
 @Composable
 fun TimeScreen(
     data: ScreenState.Ready,
-    save: (LifeNode, (String?) -> Unit) -> Unit,
     delete: (Long, (String?) -> Unit) -> Unit,
+    openAddNode: () -> Unit,
 ) {
-    var nodeTitle by rememberSaveable { mutableStateOf("") }
-    var nodeTarget by rememberSaveable { mutableStateOf("") }
-    var ageNode by rememberSaveable { mutableStateOf(true) }
     var window by rememberSaveable { mutableIntStateOf(90) }
     var message by remember { mutableStateOf<String?>(null) }
 
@@ -68,7 +65,7 @@ fun TimeScreen(
 
         Panel(green = true) {
             Text("${data.salary.now.year} 已过去 ${(data.annual.progress * 1000).toInt() / 10.0}%", color = Lime, style = MaterialTheme.typography.titleLarge)
-            AnnualRing(data.annual.progress.toFloat(), data.settings.animationsEnabled)
+            AnnualRing(data.annual.progress.toFloat(), true)
             Text("还剩 ${data.annual.remainingNaturalDays} 天")
             Text("工作日 ${data.annual.remainingWorkdays} · 非工作日 ${data.annual.remainingNonWorkdays} · 法定假期 ${data.annual.remainingLegalHolidays}")
         }
@@ -81,31 +78,21 @@ fun TimeScreen(
                 Text("完成个人信息后查看人生时间轴和退休时间。")
             } else {
                 Text("当前 ${age.years} 年 ${age.months} 个月")
-                LifeTimeline(age.years, data.retirement?.date?.year?.minus(birth.year), data.settings.animationsEnabled)
+                LifeTimeline(age.years, data.retirement?.date?.year?.minus(birth.year), true)
                 val futureDefaults = listOf(40, 50).filter { it > age.years }
                 Text((listOf("当前") + futureDefaults.map { "${it}岁" } + listOfNotNull(data.retirement?.let { "退休" })).joinToString("  ·  "))
             }
         }
 
         Panel {
-            Text("自定义人生节点", style = MaterialTheme.typography.titleLarge)
-            Input("节点名称", nodeTitle, { nodeTitle = it })
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(ageNode, { ageNode = true }, { Text("年龄节点") })
-                FilterChip(!ageNode, { ageNode = false }, { Text("日期节点") })
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("自定义人生节点", style = MaterialTheme.typography.titleLarge)
+                    Text("已添加 " + data.nodes.size + " 个节点")
+                }
+                Button(onClick = openAddNode) { Text("新增节点") }
             }
-            Input(if (ageNode) "目标年龄" else "目标日期 YYYY-MM-DD", nodeTarget, { nodeTarget = it }, if (ageNode) KeyboardType.Number else KeyboardType.Text)
-            Button(onClick = {
-                runCatching {
-                    val now = LocalDateTime.now(Clock.systemDefaultZone())
-                    if (ageNode) LifeNode(title = nodeTitle, type = LifeNodeType.AGE, targetAge = nodeTarget.toInt(), createdAt = now)
-                    else LifeNode(title = nodeTitle, type = LifeNodeType.DATE, targetDate = LocalDate.parse(nodeTarget), createdAt = now)
-                }.fold(
-                    onSuccess = { node -> save(node) { message = it ?: "已添加" }; nodeTitle = ""; nodeTarget = "" },
-                    onFailure = { message = it.message },
-                )
-            }) { Text("添加节点") }
-            message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            Text("新增时进入独立页面；已有节点只在这里展示和手动删除。")
         }
 
         data.nodes.forEach { node ->
@@ -146,6 +133,64 @@ fun TimeScreen(
             data.futureBudgets[window]?.let { FutureBudgetCard(it) }
         }
         Spacer(Modifier.height(20.dp))
+    }
+}
+
+@Composable
+fun AddLifeNodeScreen(
+    save: (LifeNode, (String?) -> Unit) -> Unit,
+    onBack: () -> Unit,
+) {
+    var nodeTitle by rememberSaveable { mutableStateOf("") }
+    var nodeTarget by rememberSaveable { mutableStateOf("") }
+    var ageNode by rememberSaveable { mutableStateOf(true) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        TextButton(onClick = onBack) { Text("← 返回时间") }
+        Text("新增人生节点", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text("记录一个年龄或日期，只计算它与你的时间距离。")
+        Panel {
+            Input("节点名称", nodeTitle, { nodeTitle = it })
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(ageNode, { ageNode = true }, { Text("年龄节点") })
+                FilterChip(!ageNode, { ageNode = false }, { Text("日期节点") })
+            }
+            Input(
+                if (ageNode) "目标年龄" else "目标日期 YYYY-MM-DD",
+                nodeTarget,
+                { nodeTarget = it },
+                if (ageNode) KeyboardType.Number else KeyboardType.Text,
+            )
+        }
+        message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+        Button(
+            onClick = {
+                runCatching {
+                    val now = LocalDateTime.now(Clock.systemDefaultZone())
+                    if (ageNode) {
+                        LifeNode(title = nodeTitle, type = LifeNodeType.AGE, targetAge = nodeTarget.toInt(), createdAt = now)
+                    } else {
+                        LifeNode(title = nodeTitle, type = LifeNodeType.DATE, targetDate = LocalDate.parse(nodeTarget), createdAt = now)
+                    }
+                }.fold(
+                    onSuccess = { node ->
+                        busy = true
+                        save(node) { failure ->
+                            busy = false
+                            if (failure == null) onBack() else message = failure
+                        }
+                    },
+                    onFailure = { message = it.message },
+                )
+            },
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(if (busy) "正在保存…" else "保存节点") }
     }
 }
 

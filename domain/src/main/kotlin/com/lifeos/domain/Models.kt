@@ -17,8 +17,6 @@ data class UserSettings(
     val salaryDay: Int = 7,
     val birthDate: LocalDate? = null,
     val retirementType: RetirementType? = null,
-    val animationsEnabled: Boolean = true,
-    val funModeEnabled: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val onboarded: Boolean = false,
 ) {

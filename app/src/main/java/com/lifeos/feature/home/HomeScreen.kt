@@ -61,7 +61,7 @@ fun NowScreen(data: ScreenState.Ready) {
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
             )
-            if (salary.state == WorkState.WORKING && data.settings.animationsEnabled) {
+            if (salary.state == WorkState.WORKING) {
                 val transition = rememberInfiniteTransition(label = "earning")
                 val alpha by transition.animateFloat(
                     initialValue = .4f,
@@ -83,7 +83,7 @@ fun NowScreen(data: ScreenState.Ready) {
                 color = Lime,
                 trackColor = Lime.copy(alpha = .16f),
             )
-            if (data.settings.funModeEnabled) Text(MotivationTextProvider.message(salary.state, salary.todayProgress))
+            Text(MotivationTextProvider.message(salary.state, salary.todayProgress))
         }
 
         Panel {
@@ -102,21 +102,13 @@ fun NowScreen(data: ScreenState.Ready) {
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
-            if (data.settings.funModeEnabled && !salary.isPayday) Text("再坚持一下，工资在向你招手。")
+            if (!salary.isPayday) Text("再坚持一下，工资在向你招手。")
         }
         Spacer(Modifier.height(20.dp))
     }
 }
 
-private fun statusTitle(data: ScreenState.Ready): String = if (data.settings.funModeEnabled) {
-    MotivationTextProvider.title(data.salary.state)
-} else when (data.salary.state) {
-    WorkState.BEFORE_WORK -> "尚未开始工作"
-    WorkState.WORKING -> "工作中"
-    WorkState.LUNCH_BREAK -> "午休中"
-    WorkState.AFTER_WORK -> "今日工作完成"
-    WorkState.HOLIDAY -> "今天不是工作日"
-}
+private fun statusTitle(data: ScreenState.Ready): String = MotivationTextProvider.title(data.salary.state)
 
 private fun countdownLabel(state: WorkState) = when (state) {
     WorkState.BEFORE_WORK -> "距离上班"

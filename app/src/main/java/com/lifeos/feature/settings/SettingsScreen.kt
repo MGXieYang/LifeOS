@@ -46,21 +46,20 @@ fun SettingsScreen(
     calendarDescription: String,
     save: (UserSettings, (String?) -> Unit) -> Unit,
 ) {
-    var salary by rememberSaveable(initial) { mutableStateOf(initial.monthlySalary.money()) }
-    var start by rememberSaveable(initial) { mutableStateOf(initial.workStart.toString()) }
-    var lunchStart by rememberSaveable(initial) { mutableStateOf(initial.lunchStart.toString()) }
-    var lunchEnd by rememberSaveable(initial) { mutableStateOf(initial.lunchEnd.toString()) }
-    var end by rememberSaveable(initial) { mutableStateOf(initial.workEnd.toString()) }
-    var payday by rememberSaveable(initial) { mutableStateOf(initial.salaryDay.toString()) }
-    var birth by rememberSaveable(initial) { mutableStateOf(initial.birthDate?.toString().orEmpty()) }
-    var retirementType by rememberSaveable(initial) { mutableStateOf(initial.retirementType) }
-    var lunchEnabled by rememberSaveable(initial) { mutableStateOf(initial.lunchBreakEnabled) }
-    var animations by rememberSaveable(initial) { mutableStateOf(initial.animationsEnabled) }
-    var funMode by rememberSaveable(initial) { mutableStateOf(initial.funModeEnabled) }
-    var theme by rememberSaveable(initial) { mutableStateOf(initial.themeMode) }
+    var salary by rememberSaveable { mutableStateOf(initial.monthlySalary.money()) }
+    var start by rememberSaveable { mutableStateOf(initial.workStart.toString()) }
+    var lunchStart by rememberSaveable { mutableStateOf(initial.lunchStart.toString()) }
+    var lunchEnd by rememberSaveable { mutableStateOf(initial.lunchEnd.toString()) }
+    var end by rememberSaveable { mutableStateOf(initial.workEnd.toString()) }
+    var payday by rememberSaveable { mutableStateOf(initial.salaryDay.toString()) }
+    var birth by rememberSaveable { mutableStateOf(initial.birthDate?.toString().orEmpty()) }
+    var retirementType by rememberSaveable { mutableStateOf(initial.retirementType) }
+    var lunchEnabled by rememberSaveable { mutableStateOf(initial.lunchBreakEnabled) }
+    var theme by rememberSaveable { mutableStateOf(initial.themeMode) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     var message by rememberSaveable { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var themeBusy by remember { mutableStateOf(false) }
 
     fun build(): UserSettings {
         val pay = salary.trim().toBigDecimalOrNull() ?: error("请输入有效的税后月薪")
@@ -80,8 +79,6 @@ fun SettingsScreen(
             salaryDay = payday.toIntOrNull() ?: error("发薪日请输入 1～31 的整数"),
             birthDate = birthday,
             retirementType = retirementType,
-            animationsEnabled = animations,
-            funModeEnabled = funMode,
             themeMode = theme,
         )
     }
@@ -119,16 +116,28 @@ fun SettingsScreen(
 
         Panel {
             Text("显示设置", style = MaterialTheme.typography.titleLarge)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("动画", modifier = Modifier.padding(top = 12.dp)); Switch(animations, { animations = it })
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(if (funMode) "轻松模式" else "简洁模式", modifier = Modifier.padding(top = 12.dp)); Switch(funMode, { funMode = it })
-            }
             Text("主题")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(ThemeMode.SYSTEM to "跟随系统", ThemeMode.LIGHT to "浅色", ThemeMode.DARK to "深色").forEach { (value, label) ->
-                    FilterChip(theme == value, { theme = value }, { Text(label) })
+                    FilterChip(
+                        selected = theme == value,
+                        onClick = {
+                            theme = value
+                            themeBusy = true
+                            error = null
+                            save(initial.copy(themeMode = value)) { failure ->
+                                themeBusy = false
+                                error = failure
+                                if (failure == null) {
+                                    message = "主题已切换"
+                                } else {
+                                    theme = initial.themeMode
+                                }
+                            }
+                        },
+                        label = { Text(label) },
+                        enabled = !themeBusy,
+                    )
                 }
             }
         }

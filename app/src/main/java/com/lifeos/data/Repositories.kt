@@ -55,7 +55,7 @@ private object SettingKeys {
     val necessary = intPreferencesKey("necessary_minutes")
     val currency = stringPreferencesKey("currency")
     val decimals = intPreferencesKey("money_decimals")
-    val removedV3Names = setOf(freeEnabled, sleep, commute, necessaryEnabled, necessary, currency, decimals).map { it.name }.toSet()
+    val removedV3Names = setOf(freeEnabled, sleep, commute, necessaryEnabled, necessary, currency, decimals, animations, funMode).map { it.name }.toSet()
 }
 
 private object V3SettingsMigration : DataMigration<Preferences> {
@@ -90,8 +90,6 @@ class SettingsRepository(private val context: Context) {
             salaryDay = p[SettingKeys.payday] ?: 7,
             birthDate = p[SettingKeys.birth]?.let(LocalDate::parse),
             retirementType = p[SettingKeys.retirementType]?.let(RetirementType::valueOf),
-            animationsEnabled = p[SettingKeys.animations] ?: true,
-            funModeEnabled = p[SettingKeys.funMode] ?: true,
             themeMode = p[SettingKeys.theme]?.let(ThemeMode::valueOf) ?: ThemeMode.SYSTEM,
             onboarded = p[SettingKeys.onboarded] ?: false,
         )
@@ -106,8 +104,6 @@ class SettingsRepository(private val context: Context) {
             p[SettingKeys.end] = s.workEnd.toString()
             p[SettingKeys.lunchEnabled] = s.lunchBreakEnabled
             p[SettingKeys.payday] = s.salaryDay
-            p[SettingKeys.animations] = s.animationsEnabled
-            p[SettingKeys.funMode] = s.funModeEnabled
             p[SettingKeys.theme] = s.themeMode.name
             p[SettingKeys.onboarded] = s.onboarded
             if (s.birthDate == null) p.remove(SettingKeys.birth) else p[SettingKeys.birth] = s.birthDate.toString()
@@ -120,6 +116,8 @@ class SettingsRepository(private val context: Context) {
             p.remove(SettingKeys.necessary)
             p.remove(SettingKeys.currency)
             p.remove(SettingKeys.decimals)
+            p.remove(SettingKeys.animations)
+            p.remove(SettingKeys.funMode)
         }
     }
 }
