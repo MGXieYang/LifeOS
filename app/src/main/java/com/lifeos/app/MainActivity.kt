@@ -98,9 +98,13 @@ private fun MainNavigation(data: ScreenState.Ready, vm: AppViewModel) {
         }
     }
     Scaffold(
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         bottomBar = {
             if (route in pages.map { it.first }) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp,
+                ) {
                     pages.forEach { (target, label, icon) ->
                         NavigationBarItem(
                             selected = route == target,

@@ -24,11 +24,17 @@ Room 1→2 instrumentation migration test 源码已通过 `:app:compileDebugAndr
 天平重置只清空当前表单，历史记录保持不变；历史入口改为独立页面，删除仍由用户逐条触发。时间首页移除内嵌新增表单，新增按钮进入独立页面，保存成功后返回列表。动画和轻松/简洁模式字段、界面控件及持久化逻辑已移除，现有动画始终启用。主题选择点击即保存并刷新全局主题，保存期间禁止重复点击，失败时恢复原主题。
 
 本轮修改后完整复跑 `:domain:test`、`:app:testDebugUnitTest`、`:app:assembleDebug`、`:app:lintDebug`，结果为 `BUILD SUCCESSFUL`。
+
+## 2026-09-08 首页视觉精修验证
+
+首页新增暖米白/深森林主题层次、工作状态胶囊、渐变 Hero 与小时/分钟/秒时间单价。单价直接由 `SalaryResult.salaryPerSecond` 高精度换算，未增加累计存储或第二套计薪逻辑。
+
+本轮修改后完整复跑 `:domain:test`、`:app:testDebugUnitTest`、`:app:assembleDebug`、`:app:lintDebug`，结果为 `BUILD SUCCESSFUL in 53s`。`git diff --check` 无空白错误；当前环境没有连接设备或模拟器，视觉与大字体检查仍保留在设备验证清单。
 ## 产物
 
 `deliverables/LifeOS-0.0.4-debug.apk`，包名 `com.lifeos`，versionCode 4，versionName 0.0.4，应用名 LifeOS。
 
-SHA-256：`66BDDCB719B4FC034EDCDDDFE1B5457149D26A12F3EC9D62756845FA71470032`。
+SHA-256：`ECD5C31A79DAD5EDEF91174A0DF0AFC75E6E2B013C28A74CE7ECB9E4E8761CED`。
 
 APK Signature Scheme v2 验证通过，签名者 1 个。最终 APK 不包含 INTERNET 权限；仅存在 Android 构建工具自动生成的应用内动态接收器权限。
 

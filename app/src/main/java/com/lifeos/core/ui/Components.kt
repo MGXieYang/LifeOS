@@ -1,6 +1,7 @@
 package com.lifeos.core.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lifeos.domain.money
 import com.lifeos.domain.ThemeMode
@@ -17,19 +19,43 @@ import java.math.RoundingMode
 
 val Forest = Color(0xFF183C32)
 val Lime = Color(0xFFCEF58A)
+val WarmCream = Color(0xFFF8F4EA)
+val WarmSand = Color(0xFFE9DDC8)
+val Copper = Color(0xFFA86D36)
 @Composable fun LifeOsTheme(themeMode: ThemeMode = ThemeMode.SYSTEM, content: @Composable () -> Unit) {
     val dark = when(themeMode) { ThemeMode.SYSTEM -> isSystemInDarkTheme(); ThemeMode.LIGHT -> false; ThemeMode.DARK -> true }
-    val colors = if(dark) darkColorScheme(primary=Lime,onPrimary=Forest,primaryContainer=Forest,onPrimaryContainer=Lime,
-        background=Color(0xFF111815),surface=Color(0xFF1B2420),onSurface=Color(0xFFE4ECE7),secondary=Color(0xFFB9C9B5)) else
-        lightColorScheme(primary=Forest,onPrimary=Color.White,
-        primaryContainer=Lime,onPrimaryContainer=Forest,background=Color(0xFFF5F6F2),
-        surface=Color(0xFFFFFFFF),onSurface=Color(0xFF202B25),secondary=Color(0xFF64755D))
-    MaterialTheme(colorScheme=colors,content=content)
+    val colors = if(dark) darkColorScheme(
+        primary=Lime,onPrimary=Forest,primaryContainer=Color(0xFF29473D),onPrimaryContainer=Color(0xFFE5F7C6),
+        background=Color(0xFF121512),surface=Color(0xFF1D211D),surfaceVariant=Color(0xFF292D27),
+        onSurface=Color(0xFFF1EEE6),onSurfaceVariant=Color(0xFFC9C7BE),secondary=Color(0xFFD9B58D),
+        outline=Color(0xFF454B43),outlineVariant=Color(0xFF343A33),
+    ) else lightColorScheme(
+        primary=Forest,onPrimary=Color.White,primaryContainer=Color(0xFFE4F4C9),onPrimaryContainer=Forest,
+        background=WarmCream,surface=Color(0xFFFFFDF8),surfaceVariant=Color(0xFFF1EADF),
+        onSurface=Color(0xFF272B27),onSurfaceVariant=Color(0xFF66675F),secondary=Copper,
+        outline=Color(0xFFD6CCBC),outlineVariant=Color(0xFFE8DFD1),
+    )
+    val typography = Typography(
+        headlineMedium = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+        titleLarge = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+        titleMedium = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+    )
+    MaterialTheme(
+        colorScheme=colors,
+        typography=typography,
+        shapes=Shapes(
+            extraSmall=RoundedCornerShape(10.dp), small=RoundedCornerShape(14.dp),
+            medium=RoundedCornerShape(20.dp), large=RoundedCornerShape(28.dp), extraLarge=RoundedCornerShape(34.dp),
+        ),
+        content=content,
+    )
 }
 @Composable fun Panel(modifier: Modifier = Modifier, green: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
-    Card(modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),
+    Card(modifier.fillMaxWidth(),shape=RoundedCornerShape(26.dp),
         colors=CardDefaults.cardColors(containerColor=if(green) Forest else MaterialTheme.colorScheme.surface,
-            contentColor=if(green) Color.White else MaterialTheme.colorScheme.onSurface)) {
+            contentColor=if(green) Color.White else MaterialTheme.colorScheme.onSurface),
+        border=if(green) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation=CardDefaults.cardElevation(defaultElevation=if(green) 6.dp else 1.dp)) {
         Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp),content=content)
     }
 }
